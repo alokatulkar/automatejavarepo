@@ -1,0 +1,10 @@
+image:
+  repository: alok2804/java-app
+  tag: latest
+
+service:
+  type: NodePort
+  port: 80
+  nodePort: 30007
+
+replicaCount: 2
