@@ -14,7 +14,7 @@ pipeline {
 
         stage('Clone Code') {
             steps {
-                git credentialsId: 'github-creds',
+                git branch: 'main',
                     url: 'https://github.com/alokatulkar/automatejavarepo.git'
             }
         }
