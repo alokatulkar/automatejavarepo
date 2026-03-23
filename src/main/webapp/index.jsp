@@ -5,7 +5,7 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title>JSP Example</title>
     </head>
-    <body bgcolor="silver">
+    <body bgcolor="yellow">
         <form method="post" action="login.jsp">
             <center>
             <table border="0" width="30%" cellpadding="3">
