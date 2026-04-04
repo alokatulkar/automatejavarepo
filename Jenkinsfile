@@ -1,12 +1,13 @@
 pipeline {
     agent any
 
-    environment {
-        DOCKER_IMAGE = "alok2804/java-app"
-    }
-
     tools {
         maven 'Maven'
+    }
+
+    environment {
+        DOCKER_IMAGE = "alok2804/java-app"
+        SONARQUBE_ENV = "sonarqube-server"
     }
 
     stages {
@@ -24,49 +25,54 @@ pipeline {
             }
         }
 
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv("${SONARQUBE_ENV}") {
+                    sh 'mvn sonar:sonar'
+                }
+            }
+        }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t ${DOCKER_IMAGE}:latest .'
+                script {
+                    sh "docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} ."
+                }
             }
         }
 
         stage('Push to DockerHub') {
-    steps {
-        script {
-            withCredentials([usernamePassword(
-                credentialsId: 'dockerhub-creds',
-                usernameVariable: 'USER',
-                passwordVariable: 'PASS'
-            )]) {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh '''
+                    echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                    docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}
+                    docker logout
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes using Helm') {
+            steps {
                 sh '''
-                echo "$PASS" | docker login -u "$USER" --password-stdin
-                docker push alok2804/java-app:latest
-                docker logout
+                helm upgrade --install java-app ./helm \
+                  --set image.repository=alok2804/java-app \
+                  --set image.tag=${BUILD_NUMBER} \
+                  --namespace default \
+                  --create-namespace
                 '''
             }
         }
     }
-}
-
-         stage('Deploy to Kubernetes using Helm') {
-    steps {
-        sh '''
-        helm upgrade --install java-app ./helm \
-          --set image.repository=alok2804/java-app \
-          --set image.tag=${BUILD_NUMBER} \
-          --namespace default \
-          --create-namespace
-        '''
-    }
-}
 
     post {
-        always {
-            echo 'Pipeline completed'
-        }
         success {
-            echo 'Deployment successful 🚀'
+            echo 'Pipeline completed successfully ✅'
         }
         failure {
             echo 'Pipeline failed ❌'
