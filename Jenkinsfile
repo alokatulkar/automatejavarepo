@@ -57,9 +57,15 @@ pipeline {
     }
 }
 
-        stage('Deploy to Kubernetes') {
+         stage('Deploy to Kubernetes using Helm') {
             steps {
-                sh 'kubectl apply -f k8s/'
+                sh '''
+                helm upgrade --install ${HELM_RELEASE} ./helm \
+                --set image.repository=${DOCKER_IMAGE} \
+                --set image.tag=${BUILD_NUMBER} \
+                --namespace ${KUBE_NAMESPACE} \
+                --create-namespace
+                '''
             }
         }
     }
