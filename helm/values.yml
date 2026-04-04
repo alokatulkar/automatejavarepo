@@ -3,8 +3,6 @@ image:
   tag: latest
 
 service:
-  type: NodePort
+  type: LoadBalancer
   port: 80
-  nodePort: 30007
-
-replicaCount: 2
+  targetPort: 8080
