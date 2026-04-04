@@ -50,17 +50,16 @@ pipeline {
 }
 
          stage('Deploy to Kubernetes using Helm') {
-            steps {
-                sh '''
-                helm upgrade --install ${HELM_RELEASE} ./helm \
-                --set image.repository=${DOCKER_IMAGE} \
-                --set image.tag=${BUILD_NUMBER} \
-                --namespace ${KUBE_NAMESPACE} \
-                --create-namespace
-                '''
-            }
-        }
+    steps {
+        sh '''
+        helm upgrade --install java-app ./helm \
+          --set image.repository=alok2804/java-app \
+          --set image.tag=${BUILD_NUMBER} \
+          --namespace default \
+          --create-namespace
+        '''
     }
+}
 
     post {
         always {
