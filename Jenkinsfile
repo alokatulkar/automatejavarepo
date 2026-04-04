@@ -7,6 +7,8 @@ pipeline {
 
     environment {
         DOCKER_IMAGE = "alok2804/java-app"
+        AWS_REGION = "ap-south-1"
+        CLUSTER_NAME = "ekscluster"
     }
 
     stages {
@@ -24,13 +26,9 @@ pipeline {
             }
         }
 
-  
-
         stage('Build Docker Image') {
             steps {
-                script {
-                    sh "docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} ."
-                }
+                sh "docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} ."
             }
         }
 
@@ -50,27 +48,30 @@ pipeline {
             }
         }
 
-            stage('Deploy to Kubernetes using Helm') {
-    steps {
-        withCredentials([usernamePassword(
-            credentialsId: 'aws-creds',
-            usernameVariable: 'AWS_ACCESS_KEY_ID',
-            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-        )]) {
-            sh '''
-            export AWS_DEFAULT_REGION=ap-south-1
+        stage('Deploy to Kubernetes using Helm') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'aws-creds',
+                    usernameVariable: 'AWS_ACCESS_KEY_ID',
+                    passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                )]) {
+                    sh '''
+                    export AWS_DEFAULT_REGION=$AWS_REGION
 
-            # Verify AWS access
-            aws sts get-caller-identity
+                    # Verify AWS credentials
+                    aws sts get-caller-identity
 
-            # Update kubeconfig for EKS
-            aws eks update-kubeconfig --region ap-south-1 --name ekscluster
-                helm upgrade --install java-app ./helm \
-                  --set image.repository=alok2804/java-app \
-                  --set image.tag=${BUILD_NUMBER} \
-                  --namespace default \
-                  --create-namespace
-                '''
+                    # Update kubeconfig
+                    aws eks update-kubeconfig --region $AWS_REGION --name $CLUSTER_NAME
+
+                    # Deploy using Helm
+                    helm upgrade --install java-app ./helm \
+                      --set image.repository=alok2804/java-app \
+                      --set image.tag=${BUILD_NUMBER} \
+                      --namespace default \
+                      --create-namespace
+                    '''
+                }
             }
         }
     }
