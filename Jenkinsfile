@@ -3,7 +3,6 @@ pipeline {
 
     environment {
         DOCKER_IMAGE = "alok2804/java-app"
-        SONARQUBE_ENV = "sonarqube-server"
     }
 
     tools {
@@ -25,13 +24,6 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv("${SONARQUBE_ENV}") {
-                    sh 'mvn sonar:sonar'
-                }
-            }
-        }
 
         stage('Build Docker Image') {
             steps {
