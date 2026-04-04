@@ -50,9 +50,21 @@ pipeline {
             }
         }
 
-        stage('Deploy to Kubernetes using Helm') {
-            steps {
-                sh '''
+            stage('Deploy to Kubernetes using Helm') {
+    steps {
+        withCredentials([usernamePassword(
+            credentialsId: 'aws-creds',
+            usernameVariable: 'AWS_ACCESS_KEY_ID',
+            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+        )]) {
+            sh '''
+            export AWS_DEFAULT_REGION=ap-south-1
+
+            # Verify AWS access
+            aws sts get-caller-identity
+
+            # Update kubeconfig for EKS
+            aws eks update-kubeconfig --region ap-south-1 --name ekscluster
                 helm upgrade --install java-app ./helm \
                   --set image.repository=alok2804/java-app \
                   --set image.tag=${BUILD_NUMBER} \
