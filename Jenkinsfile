@@ -71,11 +71,10 @@ pipeline {
 
         stage('Deploy to Kubernetes using Helm') {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'aws-creds',
-                    usernameVariable: 'AWS_ACCESS_KEY_ID',
-                    passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                )]) {
+                withCredentials([[
+    $class: 'AmazonWebServicesCredentialsBinding',
+    credentialsId: 'aws-creds'
+]]) {
                     sh '''
                     export AWS_DEFAULT_REGION=$AWS_REGION
 
