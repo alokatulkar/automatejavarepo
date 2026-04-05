@@ -1,6 +1,35 @@
 pipeline {
     agent any
 
+    pipeline {
+    agent any
+
+    stages {
+
+        stage('Terraform EKS') {
+            steps {
+                dir('terraform/eks') {
+                    sh 'terraform init'
+                    sh 'terraform plan'
+                    sh 'terraform apply -auto-approve'
+                }
+            }
+        }
+
+        stage('Configure Kubeconfig') {
+            steps {
+                sh 'aws eks --region ap-south-1 update-kubeconfig --name ekscluster'
+            }
+        }
+
+        stage('Deploy App') {
+            steps {
+                sh 'kubectl get nodes'
+            }
+        }
+    }
+}
+
     tools {
         maven 'Maven'
     }
