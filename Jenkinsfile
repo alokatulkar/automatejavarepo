@@ -28,11 +28,16 @@ pipeline {
 
         stage('Terraform EKS') {
             steps {
+        withCredentials([[
+            $class: 'AmazonWebServicesCredentialsBinding',
+            credentialsId: 'aws-creds'
+           ]]) {
                 dir('terraform/eks') {
                     sh 'terraform init'
                     sh 'terraform plan'
                     sh 'terraform apply -auto-approve'
                 }
+              }
             }
         }
 
