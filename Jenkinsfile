@@ -1,9 +1,6 @@
 pipeline {
     agent any
 
-    pipeline {
-    agent any
-
     stages {
 
         stage('Terraform EKS') {
