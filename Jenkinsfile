@@ -1,32 +1,6 @@
 pipeline {
     agent any
 
-    stages {
-
-        stage('Terraform EKS') {
-            steps {
-                dir('terraform/eks') {
-                    sh 'terraform init'
-                    sh 'terraform plan'
-                    sh 'terraform apply -auto-approve'
-                }
-            }
-        }
-
-        stage('Configure Kubeconfig') {
-            steps {
-                sh 'aws eks --region ap-south-1 update-kubeconfig --name ekscluster'
-            }
-        }
-
-        stage('Deploy App') {
-            steps {
-                sh 'kubectl get nodes'
-            }
-        }
-    }
-}
-
     tools {
         maven 'Maven'
     }
@@ -49,6 +23,22 @@ pipeline {
         stage('Build') {
             steps {
                 sh 'mvn clean package'
+            }
+        }
+
+        stage('Terraform EKS') {
+            steps {
+                dir('terraform/eks') {
+                    sh 'terraform init'
+                    sh 'terraform plan'
+                    sh 'terraform apply -auto-approve'
+                }
+            }
+        }
+
+        stage('Configure Kubeconfig') {
+            steps {
+                sh 'aws eks --region ap-south-1 update-kubeconfig --name ekscluster'
             }
         }
 
@@ -84,13 +74,10 @@ pipeline {
                     sh '''
                     export AWS_DEFAULT_REGION=$AWS_REGION
 
-                    # Verify AWS credentials
                     aws sts get-caller-identity
 
-                    # Update kubeconfig
                     aws eks update-kubeconfig --region $AWS_REGION --name $CLUSTER_NAME
 
-                    # Deploy using Helm
                     helm upgrade --install java-app ./helm \
                       --set image.repository=alok2804/java-app \
                       --set image.tag=${BUILD_NUMBER} \
@@ -98,6 +85,12 @@ pipeline {
                       --create-namespace
                     '''
                 }
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                sh 'kubectl get nodes'
             }
         }
     }
